@@ -3,12 +3,24 @@ const bcrypt = require('bcryptjs');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/userModel');
 
+// Function to generate a random secret
+const generateRandomSecret = async () => {
+  // Generate a random string
+  const randomSecret = Math.random().toString(36).substring(2, 34); // Generates a random alphanumeric string of length 32
+
+  // Hash the random secret using bcrypt
+  const salt = await bcrypt.genSalt(10);
+  const hashedSecret = await bcrypt.hash(randomSecret, salt);
+
+  return hashedSecret;
+};
+
 // @desc Register new user
 // @route POST api/users
 // @access Public
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
-  if (!name || !email || !password) {
+  const { name, email, password, adminPassword } = req.body;
+  if (!name || !email || !password || !adminPassword) {
     res.status(400);
     throw new Error('Please add all fields');
   }
@@ -24,12 +36,16 @@ const registerUser = asyncHandler(async (req, res) => {
   // Hash password
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
+  const hashedAdminPassword = await bcrypt.hash(adminPassword, salt);
+  const adminSecret = await generateRandomSecret();
 
   // Create user
   const user = await User.create({
     name,
     email,
     password: hashedPassword,
+    adminPassword: hashedAdminPassword,
+    adminSecret,
   });
 
   if (user) {
@@ -73,6 +89,22 @@ const getMe = asyncHandler(async (req, res) => {
   res.status(200).json(req.user);
 });
 
+const loginAdmin = asyncHandler(async (req, res) => {
+  const { adminPassword, email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (user && (await bcrypt.compare(adminPassword, user.adminPassword))) {
+    res.json({
+      adminToken: generateToken(user.adminId),
+      adminSecret: user.adminSecret,
+    });
+  } else {
+    res.status(400);
+    throw new Error('Invalid credentials for admin user login');
+  }
+});
+
 // Generate JWT
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -83,5 +115,6 @@ const generateToken = (id) => {
 module.exports = {
   registerUser,
   loginUser,
+  loginAdmin,
   getMe,
 };

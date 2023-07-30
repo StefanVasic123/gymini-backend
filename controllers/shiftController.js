@@ -74,8 +74,6 @@ const getLastShift = asyncHandler(async (req, res) => {
 });
 
 const deleteShift = asyncHandler(async (req, res) => {
-  console.log('params: ', req.params.id);
-
   const shiftId = req.params.id;
 
   if (!req.params.id) {

@@ -7,7 +7,7 @@ const PackagePrice = require('../models/packageModel');
 // @access private (?)
 const setPackagePrices = asyncHandler(async (req, res) => {
   const { userId, dailyPrice, monthlyPrice, yearlyPrice } = req.body;
-  console.log(userId, dailyPrice, monthlyPrice, yearlyPrice);
+
   if (
     !req.body.userId ||
     (!req.body.dailyPrice && req.body.dailyPrice !== null) ||
