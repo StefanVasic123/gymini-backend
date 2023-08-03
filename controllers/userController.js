@@ -105,6 +105,44 @@ const loginAdmin = asyncHandler(async (req, res) => {
   }
 });
 
+const changeUserPassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword, email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (user && (await bcrypt.compare(oldPassword, user.password))) {
+    const salt = await bcrypt.genSalt(10);
+    const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashedNewPassword;
+    await user.save();
+
+    res.status(200).json({ message: 'Password updated successfully' });
+  } else {
+    res.status(400);
+    throw new Error('Old passwords are not correct!');
+  }
+});
+
+const changeAdminPassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword, email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (user && (await bcrypt.compare(oldPassword, user.adminPassword))) {
+    const salt = await bcrypt.genSalt(10);
+    const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+    user.adminPassword = hashedNewPassword;
+    await user.save();
+
+    res.status(200).json({ message: 'Admin password updated successfully' });
+  } else {
+    res.status(400);
+    throw new Error('Old admin passwords are not correct!');
+  }
+});
+
 // Generate JWT
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -117,4 +155,6 @@ module.exports = {
   loginUser,
   loginAdmin,
   getMe,
+  changeUserPassword,
+  changeAdminPassword,
 };

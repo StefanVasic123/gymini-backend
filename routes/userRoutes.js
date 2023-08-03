@@ -5,6 +5,8 @@ const {
   loginUser,
   getMe,
   loginAdmin,
+  changeUserPassword,
+  changeAdminPassword,
 } = require('../controllers/userController');
 const { protect, protectAdmin } = require('../middleware/authMiddleware');
 
@@ -15,5 +17,7 @@ router.post('/loginAdmin', loginAdmin);
 router.get('/admin', protectAdmin, (req, res) => {
   res.json({ message: 'Welcome to admin page' });
 });
+router.post('/change-user-password', changeUserPassword);
+router.post('/change-admin-password', changeAdminPassword);
 
 module.exports = router;
