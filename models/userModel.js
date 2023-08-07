@@ -28,6 +28,14 @@ const userSchema = mongoose.Schema(
       type: String,
       unique: true,
     },
+    resetPasswordToken: {
+      type: String,
+      unique: true,
+    },
+    resetAdminPasswordToken: {
+      type: String,
+      unique: true,
+    },
   },
   {
     timestamps: true,

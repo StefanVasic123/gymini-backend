@@ -1,9 +1,9 @@
+const { sendResetPasswordLink } = require('../services/MailService');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/userModel');
 
-// Function to generate a random secret
 const generateRandomSecret = async () => {
   // Generate a random string
   const randomSecret = Math.random().toString(36).substring(2, 34); // Generates a random alphanumeric string of length 32
@@ -13,6 +13,20 @@ const generateRandomSecret = async () => {
   const hashedSecret = await bcrypt.hash(randomSecret, salt);
 
   return hashedSecret;
+};
+
+const generateRandomResetPasswordToken = async () => {
+  const characters =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const length = 16; // Length of the token
+
+  let randomToken = '';
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    randomToken += characters.charAt(randomIndex);
+  }
+
+  return randomToken;
 };
 
 // @desc Register new user
@@ -143,6 +157,122 @@ const changeAdminPassword = asyncHandler(async (req, res) => {
   }
 });
 
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  const resetPasswordToken = await generateRandomResetPasswordToken();
+
+  const link =
+    process.env.NODE_ENV === 'development'
+      ? `http://localhost:3000/token=${resetPasswordToken}/reset-password`
+      : `https://dev-gymini.onrender.com/token=${resetPasswordToken}/reset-password`;
+
+  // if user => send reset password email
+  if (user) {
+    // generate resetPasswordToken
+    user.resetPasswordToken = resetPasswordToken;
+    await user.save();
+    sendResetPasswordLink(email, link);
+    res
+      .status(200)
+      .json({ message: `Reset password link sent to email: ${email}` });
+  } else {
+    res.status(400);
+    throw new Error('Bad email: no user');
+  }
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  const { token } = req.params; // Extract token from URL parameter
+  const { password } = req.body;
+
+  try {
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      //  resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      res.status(400).json({ message: 'Invalid or expired token' });
+      return;
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Update user's password and remove reset token
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    // user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.status(200).json({ message: 'Password reset successful' });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+const forgotAdminPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  const resetAdminPasswordToken = await generateRandomResetPasswordToken();
+
+  const link =
+    process.env.NODE_ENV === 'development'
+      ? `http://localhost:3000/token=${resetAdminPasswordToken}/reset-admin-password`
+      : `https://dev-gymini.onrender.com/token=${resetAdminPasswordToken}/reset-admin-password`;
+
+  // if user => send reset password email
+  if (user) {
+    // generate resetPasswordToken
+    user.resetAdminPasswordToken = resetAdminPasswordToken;
+    await user.save();
+    sendResetPasswordLink(email, link);
+    res
+      .status(200)
+      .json({ message: `Reset admin password link sent to email: ${email}` });
+  } else {
+    res.status(400);
+    throw new Error('Bad email: no user');
+  }
+});
+
+const resetAdminPassword = asyncHandler(async (req, res) => {
+  const { token } = req.params; // Extract token from URL parameter
+  const { password } = req.body;
+
+  try {
+    const user = await User.findOne({
+      resetAdminPasswordToken: token,
+      //  resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      res.status(400).json({ message: 'Invalid or expired token' });
+      return;
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedAdminPassword = await bcrypt.hash(password, salt);
+
+    // Update user's password and remove reset token
+    user.adminPassword = hashedAdminPassword;
+    user.resetAdminPasswordToken = undefined;
+    // user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.status(200).json({ message: 'Admin password reset successful' });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // Generate JWT
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -157,4 +287,8 @@ module.exports = {
   getMe,
   changeUserPassword,
   changeAdminPassword,
+  forgotPassword,
+  resetPassword,
+  forgotAdminPassword,
+  resetAdminPassword,
 };

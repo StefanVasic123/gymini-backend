@@ -1,4 +1,4 @@
-const mailService = require('../services/MailService');
+const { sendClientPassword } = require('../services/MailService');
 const asyncHandler = require('express-async-handler');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -51,7 +51,7 @@ const setClient = asyncHandler(async (req, res) => {
 
   console.log('mailService: ', mailService);
 
-  mailService(req.body.email, randomPassword);
+  sendClientPassword(req.body.email, randomPassword);
 
   res.status(200).json(client);
 });

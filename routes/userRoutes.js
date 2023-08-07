@@ -7,6 +7,10 @@ const {
   loginAdmin,
   changeUserPassword,
   changeAdminPassword,
+  forgotPassword,
+  resetPassword,
+  forgotAdminPassword,
+  resetAdminPassword,
 } = require('../controllers/userController');
 const { protect, protectAdmin } = require('../middleware/authMiddleware');
 
@@ -19,5 +23,9 @@ router.get('/admin', protectAdmin, (req, res) => {
 });
 router.post('/change-user-password', changeUserPassword);
 router.post('/change-admin-password', changeAdminPassword);
+router.post('/forgot-password', forgotPassword);
+router.post('/:token/reset-password', resetPassword);
+router.post('/forgot-admin-password', forgotAdminPassword);
+router.post('/:token/reset-admin-password', resetAdminPassword);
 
 module.exports = router;
