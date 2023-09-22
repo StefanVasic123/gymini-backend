@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const {
   getClients,
+  getActiveClients,
+  getInactiveClients,
   setClient,
   loginClient,
   updateClient,
@@ -28,6 +30,8 @@ const {
 const { protect } = require('../middleware/authMiddleware');
 
 router.route('/').get(protect, getClients).post(protect, setClient);
+router.route('/active/:page').get(protect, getActiveClients);
+router.route('/inactive/:page').get(protect, getInactiveClients);
 router.route('/:id').delete(protect, deleteClient).put(protect, updateClient);
 router.route('/admin').get(protect, getClients); // TODO: refactor
 router.route('/client-login').post(loginClient);

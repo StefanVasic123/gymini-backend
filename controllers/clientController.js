@@ -14,6 +14,60 @@ const getClients = asyncHandler(async (req, res) => {
   res.status(200).json(clients);
 });
 
+// @desc Get active clients with pagination
+// @route GET /api/clients/active/:page
+// @access private
+const getActiveClients = asyncHandler(async (req, res) => {
+  const page = parseInt(req.params.page);
+  const perPage = 20; // Number of clients per page
+
+  try {
+    // Get today's date
+    const today = new Date();
+
+    // Query for active clients with pagination
+    const activeClients = await Client.find({
+      user: req.user.id, // Assuming you have a user associated with clients
+      endDate: { $gte: today }, // Clients with endDate in the future
+    })
+      .sort({ endDate: 1 }) // Sort by end date in ascending order
+      .skip(page * perPage) // Skip clients for previous pages
+      .limit(perPage); // Limit the results to the specified perPage count
+
+    res.status(200).json(activeClients);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+// @desc Get inactive clients with pagination
+// @route GET /api/clients/inactive/:page
+// @access private
+const getInactiveClients = asyncHandler(async (req, res) => {
+  const page = parseInt(req.params.page);
+  const perPage = 20; // Number of clients per page
+
+  try {
+    // Get today's date
+    const today = new Date();
+
+    // Query for inactive clients with pagination
+    const inactiveClients = await Client.find({
+      user: req.user.id, // Assuming you have a user associated with clients
+      endDate: { $lt: today }, // Clients with endDate in the past or today
+    })
+      .sort({ endDate: -1 }) // Sort by end date in descending order
+      .skip(page * perPage) // Skip clients for previous pages
+      .limit(perPage); // Limit the results to the specified perPage count
+
+    res.status(200).json(inactiveClients);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
 // @desc Set client
 // @route SET /api/clients
 // @access private
@@ -48,8 +102,6 @@ const setClient = asyncHandler(async (req, res) => {
     package: req.body.dbProgram,
     packagePrice: req.body.packagePrice,
   });
-
-  console.log('mailService: ', mailService);
 
   sendClientPassword(req.body.email, randomPassword);
 
@@ -253,4 +305,6 @@ module.exports = {
   getClientsByDate,
   getClientsByMonth,
   getClientsByYear,
+  getActiveClients,
+  getInactiveClients,
 };
