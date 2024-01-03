@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: false }));
 // origin: ['http://localhost:3000', 'https://dev-gymini.onrender.com']
 app.use(
   cors({
-    origin: 'https://dev-gymini.onrender.com',
+    origin: ['https://dev-gymini.onrender.com'],
   })
 );
 
