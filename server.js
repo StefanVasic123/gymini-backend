@@ -14,10 +14,10 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
+// origin: ['http://localhost:3000', 'https://dev-gymini.onrender.com']
 app.use(
   cors({
-    origin: ['http://localhost:3000', 'https://dev-gymini.onrender.com'],
+    origin: 'https://dev-gymini.onrender.com',
   })
 );
 
@@ -25,6 +25,7 @@ app.use('/api/clients', require('./routes/clientRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 
 // Serve frontend
+/*
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/build')));
 
@@ -36,6 +37,7 @@ if (process.env.NODE_ENV === 'production') {
 } else {
   app.get('/', (req, res) => res.send('Please set to production. . .'));
 }
+*/
 
 app.use(errorHandler);
 
